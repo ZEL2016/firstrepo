@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">ScreenRecorder</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="gallery">GALLERY</string>
+    <string name="permission_denied">User denied screen sharing permission!</string>
+    <string name="recorder_configuration">RECORDER CONFIGURATION</string>
+    <string name="video_resolusion">Video Resolusion</string>
+    <string name="screen_recoder_audio">Screen Recoder Audio</string>
+    <string name="show_screen_touch">Show Screen Touch</string>
+    <string name="high_resolution">High</string>
+    <string name="normal_resolution">Normal</string>
+    <string-array name="video_resolutions">
+        <item>@string/high_resolution</item>
+        <item>@string/normal_resolution</item>
+    </string-array>
+    <string name="record">record</string>
+    <string name="capture">capture</string>
+    <string name="review">review</string>
+    <string name="setting">setting</string>
+
+    <string name="notification_title">ScreenRecorder is recording!</string>
+    <string name="notification_content">click to stop</string>
+    <string name="video">VIDEO</string>
+    <string name="image">IMAGE</string>
+    <string name="unknown">unknown</string>
+</resources>
