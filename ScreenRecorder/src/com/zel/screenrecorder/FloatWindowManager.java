@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -38,87 +39,107 @@ public class FloatWindowManager {
         }
     }
 
+    private GestureDetector detector;
+    private Listener listener;
     private void initFloatView() {
         mFloatView = LayoutInflater.from(mContext).inflate(R.layout.float_window, null);
         FloatViewListener l = new FloatViewListener();
+
+        listener = new Listener();
+        detector = new GestureDetector(mContext, listener);
 
         mFloatView.findViewById(R.id.lay_record).setOnTouchListener(l);
         mFloatView.findViewById(R.id.lay_capture).setOnTouchListener(l);
         mFloatView.findViewById(R.id.lay_review).setOnTouchListener(l);
         mFloatView.findViewById(R.id.lay_setting).setOnTouchListener(l);
 
-        mFloatView.findViewById(R.id.lay_record).setOnClickListener(l);
-        mFloatView.findViewById(R.id.lay_capture).setOnClickListener(l);
-        mFloatView.findViewById(R.id.lay_review).setOnClickListener(l);
-        mFloatView.findViewById(R.id.lay_setting).setOnClickListener(l);
-
         mFloatView.findViewById(R.id.lay_close).setOnClickListener(l);
 
     }
 
-    private class FloatViewListener implements View.OnTouchListener, View.OnClickListener {
-        private float mTouchStartX, mTouchStartY;
-        private float x, y;
+    private class Listener extends GestureDetector.SimpleOnGestureListener{
+        private View mView;
+        public void setView(View v){
+            mView = v;
+        }
 
         @Override
-        public boolean onTouch(View v, MotionEvent event) {
-            x = event.getRawX();
-            y = event.getRawY() - statusBarHeight;
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    // 获取相对View的坐标，即以此View左上角为原点
-                    mTouchStartX = event.getX();
-                    mTouchStartY = event.getY();
-                    break;
-                case MotionEvent.ACTION_MOVE:
-                    // 更新浮动窗口位置参数
-                    mCurrentX = (int) (x - mTouchStartX);
-                    mCurrentY = (int) (y - mTouchStartY);
-                    switch (v.getId()){
-                        case R.id.lay_record:
-                            break;
-                        case R.id.lay_capture:
-                            mCurrentX -= v.getWidth();
-                            break;
-                        case R.id.lay_review:
-                            mCurrentX -= v.getWidth() * 2;
-                            break;
-                        case R.id.lay_setting:
-                            mCurrentX -= v.getWidth() * 3;
-                            break;
-                    }
-                    Log.i("zhaoenlin", "MotionEvent.ACTION_MOVE");
-                    mParams.x = mCurrentX;
-                    mParams.y = mCurrentY;
-                    mWindowManager.updateViewLayout(mFloatView, mParams);
-                    break;
-                case MotionEvent.ACTION_UP:
-                    // 更新浮动窗口位置参数
-                    mCurrentX = (int) (x - mTouchStartX);
-                    mCurrentY = (int) (y - mTouchStartY);
-                    switch (v.getId()){
-                        case R.id.lay_record:
-                            break;
-                        case R.id.lay_capture:
-                            mCurrentX -= v.getWidth();
-                            break;
-                        case R.id.lay_review:
-                            mCurrentX -= v.getWidth() * 2;
-                            break;
-                        case R.id.lay_setting:
-                            mCurrentX -= v.getWidth() * 3;
-                            break;
+        public boolean onSingleTapUp(MotionEvent e) {
+            Log.i("zhaoenlin", "MotionEvent.onSingleTapUp");
 
-                    }
-                    Log.i("zhaoenlin", "MotionEvent.ACTION_UP");
-                    mParams.x = mCurrentX;
-                    mParams.y = mCurrentY;
-                    mWindowManager.updateViewLayout(mFloatView, mParams);
-                    // 可以在此记录最后一次的位置
-                    mTouchStartX = mTouchStartY = 0;
+            Intent intent = new Intent();
+            switch (mView.getId()){
+                case R.id.lay_record:
+                    intent.setClass(mContext, MainActivity.class);
+                    intent.putExtra(RecordService.CMD, RecordService.CMD_START_RECORDING);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    mContext.startActivity(intent);
+                    break;
+                case R.id.lay_capture:
+                    break;
+                case R.id.lay_review:
+                    intent.setClass(mContext, ReviewActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    mContext.startActivity(intent);
+                    break;
+                case R.id.lay_setting:
+                    intent.setClass(mContext, SettingsActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    mContext.startActivity(intent);
+                    break;
+                case R.id.lay_close:
+                    mContext.stopService(new Intent(mContext, RecordService.class));
+                    mWindowManager.removeView(mFloatView);
                     break;
             }
-            return false;
+
+            return super.onSingleTapUp(e);
+        }
+
+        @Override
+        public boolean onDown(MotionEvent e) {
+            Log.i("zhaoenlin", "MotionEvent.onDown");
+            mTouchStartX = e.getX();
+            mTouchStartY = e.getY();
+            return super.onDown(e);
+        }
+
+        private float mTouchStartX, mTouchStartY;
+        private float x, y;
+        @Override
+        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+            Log.i("zhaoenlin", "MotionEvent.onScroll");
+            x = e2.getRawX();
+            y = e2.getRawY() - statusBarHeight;
+            // 更新浮动窗口位置参数
+            mCurrentX = (int) (x - mTouchStartX);
+            mCurrentY = (int) (y - mTouchStartY);
+            switch (mView.getId()){
+                case R.id.lay_record:
+                    break;
+                case R.id.lay_capture:
+                    mCurrentX -= mView.getWidth();
+                    break;
+                case R.id.lay_review:
+                    mCurrentX -= mView.getWidth() * 2;
+                    break;
+                case R.id.lay_setting:
+                    mCurrentX -= mView.getWidth() * 3;
+                    break;
+            }
+            mParams.x = mCurrentX;
+            mParams.y = mCurrentY;
+            mWindowManager.updateViewLayout(mFloatView, mParams);
+            return super.onScroll(e1, e2, distanceX, distanceY);
+        }
+    }
+
+    private class FloatViewListener implements View.OnTouchListener, View.OnClickListener {
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            listener.setView(v);
+            detector.onTouchEvent(event);
+            return true;
         }
 
         @Override
